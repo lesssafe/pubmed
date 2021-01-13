@@ -26,33 +26,41 @@ headers={
     }
 def pages_amount1(url):
     pubmed_url=url
-    geturl = requests.get(pubmed_url, headers=headers)
-    soupurl = BeautifulSoup(geturl.text, "html.parser")
-    amount = soupurl.find('div', attrs={'class': 'search-results-chunk results-chunk'})
-    pages_amount = amount['data-pages-amount']
-    return pages_amount
+    try:
+        geturl = requests.get(pubmed_url, headers=headers)
+        soupurl = BeautifulSoup(geturl.text, "html.parser")
+        amount = soupurl.find('div', attrs={'class': 'search-results-chunk results-chunk'})
+        pages_amount = amount['data-pages-amount']
+        return pages_amount
+    except:
+        erroramount= '你的电脑好像不能打开https://pubmed.ncbi.nlm.nih.gov/'
+        listbox.insert(tkinter.END, erroramount)
 def pubmed_search(pageid,pageurl):
     number=int(pageid)*10-10
     pubmedurl=pageurl+'&page='+pageid
-    getres=requests.get(pubmedurl,headers=headers)
-    soup=BeautifulSoup(getres.text,"html.parser")
-    lis=soup.find_all('a',attrs={'class': 'docsum-title'})
-    for li in lis:
-        number=number+1
-        try:
-            url='https://pubmed.ncbi.nlm.nih.gov'+li['href']
-            geturl=requests.get(url,headers=headers)
-            soupurl=BeautifulSoup(geturl.text,"html.parser")
-            titlesoup=soupurl.find('h1',attrs={'class': 'heading-title'})
-            title = re.findall(r'<h1 class="heading-title">\n  \n    \n    \n    \n    \n      \n  ([\S\s]*)\n\n\n    \n  \n</h1>',str(titlesoup))
-            abstractsoup = soupurl.find('div', attrs={'class': 'abstract-content selected'})
-            abstract=BeautifulSoup(str(abstractsoup)).get_text(separator=" ")
-            write_xls(url,str(title),abstract,number)
-            #successtxt='第'+str(number)+'篇文章爬取成功'
-            #listbox.insert(tkinter.END, successtxt)
-        except:
-            errortxt='第'+str(number)+'篇文章爬取失败，已跳过。'
-            listbox.insert(tkinter.END, errortxt)
+    try:
+        getres=requests.get(pubmedurl,headers=headers)
+        soup=BeautifulSoup(getres.text,"html.parser")
+        lis=soup.find_all('a',attrs={'class': 'docsum-title'})
+        for li in lis:
+            number=number+1
+            try:
+                url='https://pubmed.ncbi.nlm.nih.gov'+li['href']
+                geturl=requests.get(url,headers=headers)
+                soupurl=BeautifulSoup(geturl.text,"html.parser")
+                titlesoup=soupurl.find('h1',attrs={'class': 'heading-title'})
+                title = re.findall(r'<h1 class="heading-title">\n  \n    \n    \n    \n    \n      \n  ([\S\s]*)\n\n\n    \n  \n</h1>',str(titlesoup))
+                abstractsoup = soupurl.find('div', attrs={'class': 'abstract-content selected'})
+                abstract=BeautifulSoup(str(abstractsoup)).get_text(separator=" ")
+                write_xls(url,str(title),abstract,number)
+                #successtxt='第'+str(number)+'篇文章爬取成功'
+                #listbox.insert(tkinter.END, successtxt)
+            except:
+                errortxt='第'+str(number)+'篇文章爬取失败，已跳过。'
+                listbox.insert(tkinter.END, errortxt)
+    except:
+        errorpae = '第' + str(pageid) + '页打开错误，已跳过。'
+        listbox.insert(tkinter.END, errorpae)
 def write_xls(url,title,abstract,row):
     worksheet.write(row, 0, url)
     worksheet.write(row, 1, title)
