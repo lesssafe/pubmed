@@ -10,6 +10,7 @@ import tkinter
 import urllib.parse
 import threading
 import random
+from tkinter import messagebox
 workbook = xlsxwriter.Workbook('pubmed.xlsx',{'constant_memory':True,'strings_to_numbers':True})
 worksheet = workbook.add_worksheet("pubmed爬取数据")
 worksheet.write(0, 0, "网址链接")
@@ -78,7 +79,7 @@ def mainrun():
         notice="已爬取" + str(pageid) + "页数据"
         listbox.insert(tkinter.END,notice)
     workbook.close()
-    listbox.insert(tkinter.END, '哈哈哈哈，爬取完成了，请享用！')
+    messagebox.showinfo('完成提醒', '哈哈哈哈，爬取完成了，请享用！')
 def thread_it(func):
     t = threading.Thread(target=func)
     # 守护 !!!
