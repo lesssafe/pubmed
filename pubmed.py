@@ -39,14 +39,20 @@ def pubmed_search(pageid,pageurl):
     lis=soup.find_all('a',attrs={'class': 'docsum-title'})
     for li in lis:
         number=number+1
-        url='https://pubmed.ncbi.nlm.nih.gov'+li['href']
-        geturl=requests.get(url,headers=headers)
-        soupurl=BeautifulSoup(geturl.text,"html.parser")
-        titlesoup=soupurl.find('h1',attrs={'class': 'heading-title'})
-        title = re.findall(r'<h1 class="heading-title">\n  \n    \n    \n    \n    \n      \n  ([\S\s]*)\n\n\n    \n  \n</h1>',str(titlesoup))
-        abstractsoup = soupurl.find('div', attrs={'class': 'abstract-content selected'})
-        abstract=BeautifulSoup(str(abstractsoup)).get_text(separator=" ")
-        write_xls(url,str(title),abstract,number)
+        try:
+            url='https://pubmed.ncbi.nlm.nih.gov'+li['href']
+            geturl=requests.get(url,headers=headers)
+            soupurl=BeautifulSoup(geturl.text,"html.parser")
+            titlesoup=soupurl.find('h1',attrs={'class': 'heading-title'})
+            title = re.findall(r'<h1 class="heading-title">\n  \n    \n    \n    \n    \n      \n  ([\S\s]*)\n\n\n    \n  \n</h1>',str(titlesoup))
+            abstractsoup = soupurl.find('div', attrs={'class': 'abstract-content selected'})
+            abstract=BeautifulSoup(str(abstractsoup)).get_text(separator=" ")
+            write_xls(url,str(title),abstract,number)
+            #successtxt='第'+str(number)+'篇文章爬取成功'
+            #listbox.insert(tkinter.END, successtxt)
+        except:
+            errortxt='第'+str(number)+'篇文章爬取失败，已跳过。'
+            listbox.insert(tkinter.END, errortxt)
 def write_xls(url,title,abstract,row):
     worksheet.write(row, 0, url)
     worksheet.write(row, 1, title)
@@ -56,9 +62,9 @@ def mainrun():
     years=entry1.get()
     years=2021-int(years)
     keyword = urllib.parse.quote(keyword)
-    listbox.insert(tkinter.END, '已经开始爬取请耐心等待')
     url = 'https://pubmed.ncbi.nlm.nih.gov/?term=' + keyword + '&filter=years.'+str(years)+'-2021'
     pages_amount = pages_amount1(url)
+    listbox.insert(tkinter.END, '共'+pages_amount+'页文章需要爬取请耐心等待')
     for pageid in range(1, int(pages_amount) + 1):
         pubmed_search(str(pageid), url)
         notice="已爬取" + str(pageid) + "页数据"
@@ -89,7 +95,7 @@ if __name__ == '__main__':
     listbox.grid(row=2, columnspan=3)
     randomtxt=['(^_^)∠※','~(@^_^@)~','(☆＿☆)']
     randomnum=random.randint(0,2)
-    print(randomnum)
+    #print(randomnum)
     label2=tkinter.Label(top,text=randomtxt[randomnum],font=('微软雅黑',10))
     label2.grid(row=3,column=0)
     top.mainloop()
