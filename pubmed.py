@@ -10,12 +10,16 @@ import tkinter
 import urllib.parse
 import threading
 import random
+import urllib
+import json
 from tkinter import messagebox
 workbook = xlsxwriter.Workbook('pubmed.xlsx',{'constant_memory':True,'strings_to_numbers':True})
 worksheet = workbook.add_worksheet("pubmed爬取数据")
 worksheet.write(0, 0, "网址链接")
-worksheet.write(0, 1, "标题")  # 写入行，列，内容
-worksheet.write(0, 2, "摘要")
+worksheet.write(0, 1, "en标题")  # 写入行，列，内容
+worksheet.write(0, 2, "en摘要")
+worksheet.write(0, 3, "cn标题")  # 写入行，列，内容
+worksheet.write(0, 4, "cn摘要")
 headers={
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:84.0) Gecko/20100101 Firefox/84.0',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
@@ -53,19 +57,24 @@ def pubmed_search(pageid,pageurl):
                 title = re.findall(r'<h1 class="heading-title">\n  \n    \n    \n    \n    \n      \n  ([\S\s]*)\n\n\n    \n  \n</h1>',str(titlesoup))
                 abstractsoup = soupurl.find('div', attrs={'class': 'abstract-content selected'})
                 abstract=BeautifulSoup(str(abstractsoup)).get_text(separator=" ")
-                write_xls(url,str(title),abstract,number)
+                cn_title=fanyi_360(str(title))
+                cn_abstract=fanyi_360(abstract)
+                write_xls(url,str(title),abstract.strip(),cn_title,cn_abstract,number)
                 #successtxt='第'+str(number)+'篇文章爬取成功'
                 #listbox.insert(tkinter.END, successtxt)
-            except:
+            except Exception as e:
+                print (e)
                 errortxt='第'+str(number)+'篇文章爬取失败，已跳过。'
                 listbox.insert(tkinter.END, errortxt)
     except:
         errorpae = '第' + str(pageid) + '页打开错误，已跳过。'
         listbox.insert(tkinter.END, errorpae)
-def write_xls(url,title,abstract,row):
+def write_xls(url,title,abstract,cn_title,cn_abstract,row):
     worksheet.write(row, 0, url)
     worksheet.write(row, 1, title)
     worksheet.write(row, 2, abstract)
+    worksheet.write(row, 3, cn_title)
+    worksheet.write(row, 4, cn_abstract)
 def mainrun():
     keyword = entry.get()
     years=entry1.get()
@@ -86,6 +95,21 @@ def thread_it(func):
     t.setDaemon(True)
     # 启动
     t.start()
+def fanyi_360(en_data):
+    data = en_data
+    fanyiheaders = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:84.0) Gecko/20100101 Firefox/84.0',
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Language': 'zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2',
+        'Accept-Encoding': 'gzip, deflate',
+        'Referer': 'http://fanyi.so.com/',
+        'pro': 'fanyi',
+        'Origin': 'http://fanyi.so.com',
+        'Connection': 'close'
+    }
+    url = 'http://fanyi.so.com/index/search?eng=1&validate=&ignore_trans=0&query=' + data
+    res = requests.post(url, headers=fanyiheaders)
+    return res.json()['data']['fanyi']
 if __name__ == '__main__':
     top = tkinter.Tk()
     top.title("pubmed文章下载")
